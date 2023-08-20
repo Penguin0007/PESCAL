@@ -1,4 +1,3 @@
-# PESCAL
 # Introduction
 
 The code is for our submission 'Pessimistic Causal Reinforcement Learning with Mediators for Confounded Offline Data'. Code was run based on a cluster with slurm workload manager, with Anaconda available.
