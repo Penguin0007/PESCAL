@@ -6,9 +6,9 @@ The code is for our submission 'Pessimistic Causal Reinforcement Learning with M
 First, create and activate `"pescal"` environment, and install required packages, by running the following code in terminal under the path that contains the  `requirements.txt`.
 
 ```
-module load anaconda\
-conda create -n pescal python=3.7\
-source activate pescal\
+module load anaconda \
+conda create -n pescal python=3.7 \
+source activate pescal \
 pip install -r requirements.txt
 ```
 
