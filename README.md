@@ -6,9 +6,9 @@ The code is for our submission 'Pessimistic Causal Reinforcement Learning with M
 First, create and activate `"pescal"` environment, and install required packages, by running the following code in terminal under the path that contains the  `requirements.txt`.
 
 ```
-module load anaconda \
-conda create -n pescal python=3.7 \
-source activate pescal \
+module load anaconda
+conda create -n pescal python=3.7
+source activate pescal
 pip install -r requirements.txt
 ```
 
@@ -32,7 +32,7 @@ cd /home/Downloads/simulation/
 
 in the 3 files: `simulation.sh`, `simulation_noc.sh`, and `read_sim.sh` under `simulation` folder to your corresponding `simulation` folder path. Then run
 ```
-for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch simulation.sh $i $j; done; done\
+for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch simulation.sh $i $j; done; done
 for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch simulation_noc.sh $i $j; done; done
 ```
 to submit $2\times4\times100$ slurm jobs for the four settings for M2DP and standard MDP, respectively. The code will generate and save training results of 800 `.json` files for both M2DP and standard MDP in a folder called `"data"`.
@@ -62,7 +62,7 @@ cd /home/Downloads/real/
 
 in the 3 files: `real.sh`, `real_noc.sh`, and `read_real.sh` under `real` folder to your corresponding `real` folder path. Then run
 ```
-for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch real.sh $i $j; done; done\
+for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch real.sh $i $j; done; done
 for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch real_noc.sh $i $j; done; done
 ```
 to submit $2\times4\times100$ slurm jobs for the four settings for M2DP and standard MDP, respectively. The code will generate and save training results of 800 `.json` files for both M2DP and standard MDP in a folder called `"data"`.
