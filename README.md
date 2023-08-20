@@ -30,10 +30,10 @@ In terminal, run `cd simulation` to set the working environment to `simulation` 
 cd /home/Downloads/simulation/
 ```
 
-in 3 files: `simulation`, `simulation_noc`, and `read_sim` under `"simulation"` folder to your corresponding `simulation` folder path. Then run
+in 3 files: `simulation.sh`, `simulation_noc.sh`, and `read_sim.sh` under `simulation` folder to your corresponding `simulation` folder path. Then run
 ```
-for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch simulation $i $j; done; done
-for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch simulation_noc $i $j; done; done
+for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch simulation.sh $i $j; done; done
+for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch simulation_noc.sh $i $j; done; done
 ```
 to submit $2\times4\times100$ slurm jobs for the four settings for M2DP and standard MDP, respectively. The code will generate and save training results of 800 `.json` files for both M2DP and standard MDP in a folder called `"data"`.
 
@@ -41,7 +41,7 @@ to submit $2\times4\times100$ slurm jobs for the four settings for M2DP and stan
 
 In terminal under `simulation` folder, run
 ```
-for i in 0.0001 0.001 0.1 1; do sbatch read_sim $i noc; done
+for i in 0.0001 0.001 0.1 1; do sbatch read_sim.sh $i noc; done
 ```
 The submitted job will generate all the plots in Figure 5 for M2DP and standard MDP, which are called `pescal_sim_XXX.pdf` and `pescal_sim_noc_XXX.pdf`, where `XXX` takes different values of 0.0001, 0.001, 0.1, and 1.
 
@@ -60,10 +60,10 @@ In terminal, run `cd real` to set the working environment to `"real"` folder. Ch
 cd /home/Downloads/real/
 ```
 
-in 3 files: `real`, `real_noc`, and `read_real` under `"real"` folder to your corresponding `"real"` folder path. Then run
+in 3 files: `real.sh`, `real_noc.sh`, and `read_real.sh` under `real` folder to your corresponding `real` folder path. Then run
 ```
-for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch real $i $j; done; done
-for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch real_noc $i $j; done; done
+for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch real.sh $i $j; done; done
+for i in `seq 1 100`; do for j in 0.0001 0.001 0.1 1; do sbatch real_noc.sh $i $j; done; done
 ```
 to submit $2\times4\times100$ slurm jobs for the four settings for M2DP and standard MDP, respectively. The code will generate and save training results of 800 `.json` files for both M2DP and standard MDP in a folder called `"data"`.
 
@@ -71,7 +71,7 @@ to submit $2\times4\times100$ slurm jobs for the four settings for M2DP and stan
 
 In terminal of `"real"` folder, run
 ```
-for i in 0.0003 0.001 0.1 1; do sbatch read_real $i noc; done
+for i in 0.0003 0.001 0.1 1; do sbatch read_real.sh $i noc; done
 ```
 The submitted job will generate all the plots in Figure 6 for M2DP and standard MDP, which are called `pescal_real_XXX.pdf` and `pescal_real_noc_XXX.pdf`, where `XXX` takes values 0.0003, 0.001, 0.1, and 1.
 
