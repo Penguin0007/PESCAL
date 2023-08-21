@@ -69,7 +69,7 @@ to submit $2\times4\times100$ slurm jobs for the four settings for M2DP and stan
 
 ### Visualize results
 
-In terminal of `"real"` folder, run
+In terminal of `real` folder, run
 ```
 for i in 0.0003 0.001 0.1 1; do sbatch read_real.sh $i noc; done
 ```
