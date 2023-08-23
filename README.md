@@ -18,7 +18,7 @@ The code is orginazed as follows: `"simulation"` folder contains the code to rep
 
 ## Figure 5
 ### Training
-Python files `simulation_noc.py` and `simulation.py` in `simulation` folder contains code to run and generate training results for non-confounded mediated Markov Decision Process (Standard MDP, line 1 in Figure 5), and confounded mediated Markov Decision Process (M2DP, line 2 in Figure 5). They both have the following parameters to specify:
+Python files `simulation_noc.py` and `simulation.py` in `simulation` folder contains code to run and generate training results for confounded mediated Markov Decision Process (M2DP, line 1 in Figure 5), and non-confounded mediated Markov Decision Process (Standard MDP, line 2 in Figure 5). They both have the following parameters to specify:
 
 ```
 --iters: Iteration number, we used 100.
@@ -48,7 +48,7 @@ The submitted job will generate all the plots in Figure 5 for M2DP and standard 
 ## Figure 6
 The `Training` and `Visualize results` sessions in Figure 6 follow the same flavor as in Figure 5.
 ### Training
-Python files `real_noc.py` and `real.py` in `real` folder contains code to run and generate training results for non-confounded mediated Markov Decision Process (Standard MDP, line 1 in Figure 6), and confounded mediated Markov Decision Process (M2DP, line 2 in Figure 6). They both have the following parameters to specify:
+Python files `real_noc.py` and `real.py` in `real` folder contains code to run and generate training results for confounded mediated Markov Decision Process (M2DP, line 1 in Figure 6), and non-confounded mediated Markov Decision Process (Standard MDP, line 2 in Figure 6). They both have the following parameters to specify:
 
 ```
 --iters: Iteration number, we used 100.
