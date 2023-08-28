@@ -2,7 +2,7 @@ import numpy as np, pandas as pd, torch, torch.nn as nn, json, os, time
 from scipy.special import expit
 start_time = time.time()
 if not os.path.exists('data'):
-   os.makedirs('data')
+   os.makedirs('data', exist_ok=True)
 
 def train(iters, rwindow, ratio):
     #MDP ratio=0.0001 rwindow=50

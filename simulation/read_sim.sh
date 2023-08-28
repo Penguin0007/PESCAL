@@ -10,7 +10,7 @@ cd /home/Downloads/simulation/
 echo "$i$j"
 python read_sim.py --ratio ${1} --c ${2}
 
-#terminal command: for i in 0.0001 0.001 0.1 1; do sbatch read_sim.sh $i noc; done
+#terminal command: for i in 0.0003 0.5 1; do sbatch read_sim.sh $i noc; done
 
 
 
