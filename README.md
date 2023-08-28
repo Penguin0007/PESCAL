@@ -14,7 +14,7 @@ pip install -r requirements.txt
 
 # Figures in paper
 
-The code is orginazed as follows: `"simulation"` folder contains the code to reproduce the simulation results in Figure 5; `"real"` folder contains the code to reproduce the real data experiment results in Figure 6.
+The code is organized as follows: `"simulation"` folder contains the code to reproduce the simulation results in Figure 5; `"real"` folder contains the code to reproduce the real data experiment results in Figure 6.
 
 ## Figure 5
 ### Training
