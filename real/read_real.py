@@ -111,11 +111,16 @@ def read(iters,ratio,t,Nodefaultcat=False):
             
             sns.set_theme()
             plt.figure()
-            sns.lineplot(data=fqi_rewards_running_pd, x="idx",y="return", label="FQI")
-            sns.lineplot(data=cql_rewards_running_pd, x="idx",y="return", label="CQL")
-            sns.lineplot(data=cal_rewards_running_pd, x="idx",y="return", label="CAL")
+            sns.lineplot(data=fqi_rewards_running_pd, x="idx",y="return", label="FQI", linewidth=3)
+            sns.lineplot(data=cql_rewards_running_pd, x="idx",y="return", label="CQL", linewidth=3)
+            sns.lineplot(data=cal_rewards_running_pd, x="idx",y="return", label="Causal FQI", linewidth=3)
             for p_ratio in p_ratios:
-                sns.lineplot(data=pescal_rewards_running_pd[p_ratio], x="idx",y="return", label="PESCAL")#FAVI+pessm"+str(p_ratio)+'sd')
+                sns.lineplot(data=pescal_rewards_running_pd[p_ratio], x="idx",y="return", label="PESCAL", linewidth=4)#FAVI+pessm"+str(p_ratio)+'sd')
+            # if typ:#non-confounded
+            #     plt.ylim(82,95)
+            # else:#confounded
+            #     plt.ylim(20,23.6)
+            plt.legend(fontsize=13)
             plt.xlabel("Training Iterations")
             plt.ylabel("online average return")
             pdf.savefig()

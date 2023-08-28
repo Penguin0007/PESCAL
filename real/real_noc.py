@@ -4,7 +4,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 device=torch.device("cpu")
 if not os.path.exists('data'):
-   os.makedirs('data')
+   os.makedirs('data', exist_ok=True)
 
 def train(iters, rwindow, ratio):
     start_time = time.time()
@@ -41,9 +41,9 @@ def train(iters, rwindow, ratio):
 
         def reward(self, state, mediator, confounder, random=True):
             if self.dim_state == 1:
-                rmean = 0.5*(state[0] + mediator) + 0.1*state[0]
+                rmean = 0.5*(state[0] + mediator) - 0.1*state[0]
             elif self.dim_state >= 2:
-                rmean = 0.5*(np.sum(state) + mediator) + 0.1*np.sum(state)
+                rmean = 0.5*(np.sum(state) + mediator) - 0.1*np.sum(state)
                 pass
             if random:
                 reward = np.random.normal(size=1, loc=rmean, scale=0.1)
@@ -59,7 +59,7 @@ def train(iters, rwindow, ratio):
                 next_state[0] = 0.5*(state[0] + mediator) - 0.1*state[0]
             else:
                 pass
-            cov_matrix = 0.1*np.eye(self.dim_state)
+            cov_matrix = 1*np.eye(self.dim_state)
             next_state = np.random.multivariate_normal(size=1, mean=next_state, cov=cov_matrix)
             next_state = next_state.flatten()
             return next_state
@@ -224,9 +224,7 @@ def train(iters, rwindow, ratio):
                 mrows=np.repeat(m, rows)
                 pm_sa=Pm_sa(sclone, arows, mrows)
                 if penalize_m:
-                    if all(counts>30):
-                        pm_sa=pm_sa-1.96*np.sqrt(getvar(sclone, arows))*pm_sa*(1-pm_sa)
-                    else: pm_sa=pm_sa-1.96*np.sqrt(getvar(sclone, arows))*(pm_sa*(1-pm_sa))**(1/5)
+                    pm_sa=pm_sa-1.96*np.sqrt(getvar(sclone, arows)*pm_sa*(1-pm_sa))
                 for atilde in env.action_space:
                     #set P(atilde|s) and W(s,atilde,m)
                     pa_s=Pa_s(sclone, np.repeat(atilde, rows))
