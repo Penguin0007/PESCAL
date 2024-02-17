@@ -1,6 +1,6 @@
 # Introduction
 
-The code is for our submission "Pessimistic Causal Reinforcement Learning with Mediators for Confounded Offline Data". Code was run based on a cluster with slurm workload manager, with Anaconda available.
+The code is for our submission "Pessimistic Causal Reinforcement Learning with Mediators for Confounded Observational Data". Code was run based on a cluster with slurm workload manager, with Anaconda available.
 
 # Requirements
 First, create and activate `"pescal"` environment, and install required packages, by running the following code in terminal under the path that contains the  `requirements.txt`.
@@ -18,20 +18,20 @@ The code is organized as follows: `"simulation"` folder contains the code to rep
 
 ## Figure 5
 ### Training
-Python files `simulation_noc.py` and `simulation.py` in `simulation` folder contains code to run and generate training results for confounded mediated Markov Decision Process (M2DP, line 1 in Figure 5), and non-confounded mediated Markov Decision Process (Standard MDP, line 2 in Figure 5). They both have the following parameters to specify:
+In `simulation` folder, Python files `simulation_noc.py` (non-confounded mediated Markov Decision Process (Standard MDP, line 2 in Figure 5)), and `simulation.py` (confounded mediated Markov Decision Process (M2DP, line 1 in Figure 5)) contain code to run and generate training results in Figure 5. They both have the following parameters to specify:
 
 ```
 # Parameter description
---iters: Iteration number, we used 100.
+--seeds: Number of seeds to average over, default 100.
 --rwindow: Moving window length of which we take average of emperical online reward, default 50.
---ratio: Ratio of size of original data (size of 50000) we want to keep. We used 0.0003, 0.5, 1 (3 settings).
+--keeping_ratio: Ratio of the original data (50000 observation tuples) to keep. We used 0.0003, 0.5, 1 (corresponding to 3 columns in Figure 5).
 ```
 In terminal, run `cd simulation` to set the working environment to `simulation` folder. Change the following line
 ```
 cd /home/Downloads/simulation/
 ```
 
-in the 3 files: `simulation.sh`, `simulation_noc.sh`, and `read_sim.sh` under `simulation` folder to your corresponding `simulation` folder path. Then run
+in the 3 files: `simulation.sh`, `simulation_noc.sh`, and `read_sim.sh` under `simulation` folder, to your corresponding `simulation` folder path. Then run
 ```
 for i in `seq 1 100`; do for j in 0.0003 0.5 1; do sbatch simulation.sh $i $j; done; done
 for i in `seq 1 100`; do for j in 0.0003 0.5 1; do sbatch simulation_noc.sh $i $j; done; done
@@ -44,10 +44,10 @@ In terminal under `simulation` folder, run
 ```
 for i in 0.0003 0.5 1; do sbatch read_sim.sh $i noc; done
 ```
-The submitted job will generate all the plots in Figure 5 for M2DP and standard MDP, called `pescal_sim_XXX.pdf` and `pescal_sim_noc_XXX.pdf`, where `XXX` is ratio, which takes different values of 0.0003, 0.5, and 1 (see paramater description above).
+The submitted job will generate all the plots in Figure 5 for M2DP and standard MDP, called `pescal_sim_XXX.pdf` and `pescal_sim_noc_XXX.pdf`, where `XXX` is `keeping_ratio`, which takes different values of 0.0003, 0.5, and 1 (see paramater description above).
 
 ## Figure 6
-The `Training` and `Visualize results` sessions in Figure 6 follow the same flavor as in Figure 5.
+The `Training` and `Visualize results` sessions in Figure 6 follow the same path as above for Figure 5.
 ### Training
 Python files `real_noc.py` and `real.py` in `real` folder contains code to run and generate training results for confounded mediated Markov Decision Process (M2DP, line 1 in Figure 6), and non-confounded mediated Markov Decision Process (Standard MDP, line 2 in Figure 6). They both have the following parameters to specify:
 
