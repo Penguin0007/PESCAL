@@ -152,11 +152,11 @@ def train(env_setting, seed, ratio, rwindow, num_itrs, project_steps, batch_size
         emperical_reward.update((x,y/trajectory) for x,y in emperical_reward.items())
         return emperical_reward
     
-    print("Online environment observations...")
-    emperical_reward=average_emperical_reward(env, trajectory=100, horizon=1000)            
-    opt_pol=max(emperical_reward, key=emperical_reward.get)
-    print("Online reward for all possible policy:\n", emperical_reward)
-    print("Online optimal policy", opt_pol)
+    # print("Online environment observations...")
+    # emperical_reward=average_emperical_reward(env, trajectory=100, horizon=1000)            
+    # opt_pol=max(emperical_reward, key=emperical_reward.get)
+    # print("Online reward for all possible policy:\n", emperical_reward)
+    # print("Online optimal policy", opt_pol)
     
     ###Generate offline training dataset
     def generate_training_dataset(env, epoch, horizon):
@@ -173,7 +173,7 @@ def train(env_setting, seed, ratio, rwindow, num_itrs, project_steps, batch_size
                 s=s_prime
         return training_dataset
     
-    print("\nFinished environment observations, generating offline dataset...")
+    print("\nGenerating offline dataset...")
     training_dataset_orig=generate_training_dataset(env, epoch=100, horizon=500)
     
     training_dataset=training_dataset_orig[:round(ratio*len(training_dataset_orig))]
