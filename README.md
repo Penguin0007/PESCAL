@@ -1,9 +1,9 @@
 # Introduction
 
-The code is for our submission "Pessimistic Causal Reinforcement Learning with Mediators for Confounded Observational Data". Code was run based on a cluster with slurm workload manager, with Anaconda available.
+The code is author's implementation of experiment results in "Pessimistic Causal Reinforcement Learning with Mediators for Confounded Observational Data".
 
 # Requirements
-First, create and activate `"pescal"` environment, and install required packages, by running the following code in terminal under the path that contains the  `requirements.txt`.
+First, create and activate `"pescal"` environment, and install required packages. Download and run the following code in terminal under the folder that contains `requirements.txt`.
 
 ```
 module load anaconda
@@ -14,67 +14,29 @@ pip install -r requirements.txt
 
 # Figures in paper
 
-The code is organized as follows: `"simulation"` folder contains the code to reproduce the simulation results in Figure 5; `"real"` folder contains the code to reproduce the real data experiment results in Figure 6.
+The code is organized as follows: `"simulation"` folder contains the code to reproduce the simulation results in Figure 5; `"real"` folder contains the code to reproduce the real data experiment results in Figure 6. You can directly visualize results using the provided pre-trained data in both `simulation` and `real` folder. To avoid running training, and directly visualize results, please jump to "[Visualize results](#visualize-results)" session below.
 
-## Figure 5
-### Training
-In `simulation` folder, Python files `simulation_noc.py` (non-confounded mediated Markov Decision Process (Standard MDP, line 2 in Figure 5)), and `simulation.py` (confounded mediated Markov Decision Process (M2DP, line 1 in Figure 5)) contain code to run and generate training results in Figure 5. They both have the following parameters to specify:
+## Training
+In `simulation` folder, run:
+```
+python simulation.py
+```
+In `real` folder, run:
+```
+python real.py
+```
+The code will generate and save training results of 600 `.json` files in a folder called `"data"`.
 
-```
-# Parameter description
---seeds: Number of seeds to average over, default 100.
---rwindow: Moving window length of which we take average of emperical online reward, default 50.
---keeping_ratio: Ratio of the original data (50000 observation tuples) to keep. We used 0.0003, 0.5, 1 (corresponding to 3 columns in Figure 5).
-```
-In terminal, run `cd simulation` to set the working environment to `simulation` folder. Change the following line
-```
-cd /home/Downloads/simulation/
-```
+## Visualize results
 
-in the 3 files: `simulation.sh`, `simulation_noc.sh`, and `read_sim.sh` under `simulation` folder, to your corresponding `simulation` folder path. Then run
+Under `simulation` folder, run
 ```
-for i in `seq 1 100`; do for j in 0.0003 0.5 1; do sbatch simulation.sh $i $j; done; done
-for i in `seq 1 100`; do for j in 0.0003 0.5 1; do sbatch simulation_noc.sh $i $j; done; done
+python read_sim.py
 ```
-to submit $2\times3\times100$ slurm jobs for the four settings for M2DP and standard MDP, respectively. The code will generate and save training results of 600 `.json` files for both M2DP and standard MDP in a folder called `"data"`.
+Under `real` folder, run 
+```
+python read_real.py
+```
+The code will generate all the plots in Figure 5 and Figure 6.
 
-### Visualize results
-
-In terminal under `simulation` folder, run
-```
-for i in 0.0003 0.5 1; do sbatch read_sim.sh $i noc; done
-```
-The submitted job will generate all the plots in Figure 5 for M2DP and standard MDP, called `pescal_sim_XXX.pdf` and `pescal_sim_noc_XXX.pdf`, where `XXX` is `keeping_ratio`, which takes different values of 0.0003, 0.5, and 1 (see paramater description above).
-
-## Figure 6
-The `Training` and `Visualize results` sessions in Figure 6 follow the same path as above for Figure 5.
-### Training
-Python files `real_noc.py` and `real.py` in `real` folder contains code to run and generate training results for confounded mediated Markov Decision Process (M2DP, line 1 in Figure 6), and non-confounded mediated Markov Decision Process (Standard MDP, line 2 in Figure 6). They both have the following parameters to specify:
-
-```
---iters: Iteration number, we used 100.
---rwindow: Moving window length of which we take average of emperical online reward, default 50.
---ratio: Ratio of size of original data (size of 50000) we want to keep. We used 0.0003, 0.5, 1 (3 settings).
-```
-In terminal, run `cd real` to set the working environment to `real` folder. Change the following line
-```
-cd /home/Downloads/real/
-```
-
-in the 3 files: `real.sh`, `real_noc.sh`, and `read_real.sh` under `real` folder to your corresponding `real` folder path. Then run
-```
-for i in `seq 1 100`; do for j in 0.0003 0.5 1; do sbatch real.sh $i $j; done; done
-for i in `seq 1 100`; do for j in 0.0003 0.5 1; do sbatch real_noc.sh $i $j; done; done
-```
-to submit $2\times3\times100$ slurm jobs for the four settings for M2DP and standard MDP, respectively. The code will generate and save training results of 600 `.json` files for both M2DP and standard MDP in a folder called `"data"`.
-
-### Visualize results
-
-In terminal of `real` folder, run
-```
-for i in 0.0003 0.5 1; do sbatch read_real.sh $i noc; done
-```
-The submitted job will generate all the plots in Figure 6 for M2DP and standard MDP, which are called `pescal_real_XXX.pdf` and `pescal_real_noc_XXX.pdf`, where `XXX` is ratio, which takes values 0.0003, 0.5, and 1 (see paramater description above).
-
-
-We used a computing cluster that has Two Sky Lake CPUs @ 2.60GHz, 24 processor cores, 96 GB of RAM, and 100 Gbps Infiniband interconnects. For each of the 600 jobs submitted for training, simulation takes 10~15 minutes, real data experiment takes about 3 hours to 3.5 hours; It takes within 5 minutes in `Visualize results` for drawing all the plots for both simulation and real data experiment.
+We use a computing cluster that has Sky Lake CPUs @ 2.60GHz, 24 processor cores, 96 GB of RAM, and 100 Gbps Infiniband interconnects. Runtime for PESCAL and CAL both takes around 5 minutes for simulation; and around 1.5 hours for real data experiment, for running 10000 training steps in each seed.
