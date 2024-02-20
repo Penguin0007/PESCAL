@@ -1,65 +1,123 @@
 import numpy as np, pandas as pd, torch, torch.nn as nn, json, os, time
 from scipy.special import expit
-start_time = time.time()
 if not os.path.exists('data'):
    os.makedirs('data', exist_ok=True)
+device=torch.device("cpu")  # We found the code more cpu-demanding.
 
-def train(iters, rwindow, ratio):
-    #MDP ratio=0.0001 rwindow=50
+
+def train(env_setting, seed, ratio, rwindow, num_itrs, project_steps, batch_size, discount):
+    start_time = time.time()
+    print("---------------------------------------")
+    print(f"Environment: toy, {env_setting}; Keeping ratio: {ratio}; Seed: {seed}")
+    print("---------------------------------------")
+    torch.manual_seed(seed)
+    np.random.seed(seed)
     p_ratios=[1.96]
-    class Env(object):
-        def __init__(self):
-            self.num_states=2
-            self.num_actions=3
-            self.num_mediators=2
-            self.num_confounders=2
+    if env_setting == "unconfounded":
+        filename = f"pescal_sim_noc_{ratio}_{seed}"
+        class Env(object):
+            def __init__(self):
+                self.num_states=2
+                self.num_actions=3
+                self.num_mediators=2
+                self.num_confounders=2
+                
+                self.state_space=[0,1]
+                self.confounder_space=[-1,1]
+                self.action_space=[-1,0,1]
+                self.mediator_space=[0,1]
+                self.reward_space=[-1,1]
             
-            self.state_space=[0,1]
-            self.confounder_space=[-1,1]
-            self.action_space=[-1,0,1]
-            self.mediator_space=[0,1]
-            self.reward_space=[-1,1]
-        
-        def init_state(self):
-            init_state = int(np.random.binomial(n=1, p=0.5, size=1))
-            return init_state
-        
-        def confounder(self, state):
-            pc=float(expit(0.1*state))
-            confounder = int(np.random.choice(self.confounder_space, 1, p=[1-pc, pc]))
-            return confounder
-        
-        def action(self, state, confounder):
-            pa = float(expit(state + 2*confounder))
-            a = int(np.random.choice(self.action_space, 1, p=[0.5*pa, 1-pa, 0.5*pa]))
-            return a
-        
-        def online_action(self, state, pa0, pa1):
-            if state==0:
-                a = int(np.random.choice(self.action_space, 1, p=pa0))
-            elif state==1:
-                a = int(np.random.choice(self.action_space, 1, p=pa1))
-            return a
-     
-        def mediator(self, state, action):
-            pm = float(expit(0.1*state + action))
-            m = int(np.random.choice(list(reversed(self.mediator_space)), 1, p=[1-pm, pm]))
-            return m
-        
-        def reward(self, state, mediator, confounder):
-            pr = float(expit(2*confounder + 0.1*state + 2*mediator))
-            reward = int(np.random.choice(self.reward_space, 1, p=[1-pr, pr]))
-            return reward
-     
-        def next_state(self, state, mediator, confounder):
-            ps = float(expit(2*confounder + 0.1*state + 2*mediator))
-            next_state = int(np.random.binomial(n=1, p=ps, size=1))
-            return next_state
+            def init_state(self):
+                init_state = np.random.binomial(n=1, p=0.5, size=1).item()
+                return init_state
+            
+            def confounder(self, state):
+                pc = expit(0.1*state)
+                confounder = np.random.choice(self.confounder_space, 1, p=[1-pc, pc]).item()
+                return confounder
+            
+            def action(self, state, confounder):
+                pa = expit(state)
+                a = np.random.choice(self.action_space, 1, p=[0.5*pa, 1-pa, 0.5*pa]).item()
+                return a
+            
+            def online_action(self, state, pa0, pa1):
+                if state==0:
+                    a = np.random.choice(self.action_space, 1, p=pa0).item()
+                elif state==1:
+                    a = np.random.choice(self.action_space, 1, p=pa1).item()
+                return a
+         
+            def mediator(self, state, action):
+                pm = expit(0.1*state + action)
+                m = np.random.choice(list(reversed(self.mediator_space)), 1, p=[1-pm, pm]).item()
+                return m
+            
+            def reward(self, state, mediator, confounder):
+                pr = expit(0.1*state + 2*mediator)
+                reward = np.random.choice(self.reward_space, 1, p=[1-pr, pr]).item()
+                return reward
+         
+            def next_state(self, state, mediator, confounder):
+                ps = expit(0.1*state + 2*mediator)
+                next_state = np.random.binomial(n=1, p=ps, size=1).item()
+                return next_state
+    else:
+        filename = f"pescal_sim_{ratio}_{seed}"
+        class Env(object):
+            def __init__(self):
+                self.num_states=2
+                self.num_actions=3
+                self.num_mediators=2
+                self.num_confounders=2
+                
+                self.state_space=[0,1]
+                self.confounder_space=[-1,1]
+                self.action_space=[-1,0,1]
+                self.mediator_space=[0,1]
+                self.reward_space=[-1,1]
+            
+            def init_state(self):
+                init_state = np.random.binomial(n=1, p=0.5, size=1).item()
+                return init_state
+            
+            def confounder(self, state):
+                pc = expit(0.1*state)
+                confounder = np.random.choice(self.confounder_space, 1, p=[1-pc, pc]).item()
+                return confounder
+            
+            def action(self, state, confounder):
+                pa = expit(state + 2*confounder)
+                a = np.random.choice(self.action_space, 1, p=[0.5*pa, 1-pa, 0.5*pa]).item()
+                return a
+            
+            def online_action(self, state, pa0, pa1):
+                if state==0:
+                    a = np.random.choice(self.action_space, 1, p=pa0).item()
+                elif state==1:
+                    a = np.random.choice(self.action_space, 1, p=pa1).item()
+                return a
+         
+            def mediator(self, state, action):
+                pm = expit(0.1*state + action)
+                m = np.random.choice(list(reversed(self.mediator_space)), 1, p=[1-pm, pm]).item()
+                return m
+            
+            def reward(self, state, mediator, confounder):
+                pr = expit(2*confounder + 0.1*state + 2*mediator)
+                reward = np.random.choice(self.reward_space, 1, p=[1-pr, pr]).item()
+                return reward
+         
+            def next_state(self, state, mediator, confounder):
+                ps = expit(2*confounder + 0.1*state + 2*mediator)
+                next_state = np.random.binomial(n=1, p=ps, size=1).item()
+                return next_state
 
     env=Env()
 
     #Emperical optimal policy
-    def online_reward(env, size, discount=0.99):
+    def online_reward(env, size, discount):
         emperical_reward={(a0,a1):0 for a0 in env.action_space for a1 in env.action_space}
         det_policy=np.identity(3)
         s=env.init_state()
@@ -81,17 +139,18 @@ def train(iters, rwindow, ratio):
                 emperical_reward[(a0,a1)]=rewards
         return emperical_reward
 
-    def average_emperical_reward(env, trajectory, horizon):
+    def average_emperical_reward(env, discount, trajectory, horizon):
         emperical_reward={(a0,a1):0 for a0 in env.action_space for a1 in env.action_space}
         for i in range(trajectory):
-            online_reward_single=online_reward(env, size=horizon)
+            online_reward_single=online_reward(env, horizon, discount)
             for a1 in env.action_space:
                 for a2 in env.action_space:
                     emperical_reward[(a1,a2)]+=online_reward_single[(a1,a2)]
         emperical_reward.update((x,y/trajectory) for x,y in emperical_reward.items())
         return emperical_reward
-
-    emperical_reward=average_emperical_reward(env, trajectory=100, horizon=1000)            
+    
+    print("Online environment observations...")
+    emperical_reward=average_emperical_reward(env, discount, trajectory=100, horizon=1000)            
     opt_pol=max(emperical_reward, key=emperical_reward.get)
     print("Online reward for all possible policy (state 0, state 1):\n", emperical_reward)
     print("Online optimal policy for state 0:", opt_pol[0], " state 1: ", opt_pol[1])
@@ -111,7 +170,8 @@ def train(iters, rwindow, ratio):
                 training_dataset.append((s,a,m,r,s_prime))
                 s=s_prime
         return training_dataset
-
+    
+    print("\nFinished environment observations, generating offline dataset...")
     training_dataset_orig=generate_training_dataset(env, epoch=100, horizon=500)
     
     training_dataset=training_dataset_orig[:round(ratio*len(training_dataset_orig))]
@@ -121,7 +181,7 @@ def train(iters, rwindow, ratio):
         else:
             pass
         
-   
+    print("\nCalculating front-door adjustment probabilities...")
     ###Front-door adjustment    
     #Goal P(r|s,do(a))=\sum P(m|s,a)P(r|s,a*,m)P(a*|s)  &  P(s'|s,do(a))=\sum P(m|s,a)P(s'|s,a*,m)P(a*|s)
     pd_training_data=pd.DataFrame(training_dataset)
@@ -154,9 +214,9 @@ def train(iters, rwindow, ratio):
         if np.isnan(value):
             p_ucb[key]=0
     
-    sd_psam={(s,a,m):(np.sqrt(Pm_sa[(s,a,m)]*(1-Pm_sa[(s,a,m)])/max(len(pd_training_data[(pd_training_data['s']==s)&(pd_training_data['a']==a)]), 1/(10000*n))) 
+    sd_psam={(s,a,m):(np.sqrt(Pm_sa[(s,a,m)]*(1-Pm_sa[(s,a,m)])/max(len(pd_training_data[(pd_training_data['s']==s)&(pd_training_data['a']==a)]), 1/(1e4*n))) 
                          if len(pd_training_data[(pd_training_data['s']==s)&(pd_training_data['a']==a)])>=30
-                         else np.sqrt(0.5*(1-0.5)/max(len(pd_training_data[(pd_training_data['s']==s)&(pd_training_data['a']==a)]), 1/(10000*n))))
+                         else np.sqrt(0.5*(1-0.5)/max(len(pd_training_data[(pd_training_data['s']==s)&(pd_training_data['a']==a)]), 1/(1e4*n))))
             for s in env.state_space
             for a in env.action_space
             for m in env.mediator_space}
@@ -216,15 +276,10 @@ def train(iters, rwindow, ratio):
     
 
     ##################Algorithms######################
+    print("\nBegin training with different algorithms...")
     np_training_data=np.array(training_dataset)
 
     #Neural Networks
-    device=torch.device("cpu")
-    num_itrs=10000
-    project_steps=50
-    batch_size=128
-    
-    #Neural net
     class Net(nn.Module):
         def __init__(self, env):
             super(Net, self).__init__()
@@ -262,7 +317,7 @@ def train(iters, rwindow, ratio):
         y_one_hot = y_one_hot.view(*y.shape, -1)
         return y_one_hot
         
-    def q_backup_sampled(env, q_values, r, s_prime_idx, discount=0.99):
+    def q_backup_sampled(env, q_values, r, s_prime_idx, discount):
         q_values_sprime = q_values[s_prime_idx, :]
         values = np.max(q_values_sprime, axis=-1)
         target_value = r + discount * values
@@ -285,7 +340,7 @@ def train(iters, rwindow, ratio):
         return pred_qvalues.detach().cpu().numpy()  
     
     ############################################FQI################################################
-    def FQI(env, net, batch_size, num_itrs, discount=0.99, project_steps=50, training_dataset=None):
+    def FQI(env, net, batch_size, num_itrs, discount, project_steps, training_dataset=None):
         dS = env.num_states
         dA = env.num_actions
         net = net.to(device)
@@ -304,7 +359,7 @@ def train(iters, rwindow, ratio):
             np.array([env.mediator_space.index(m_i) for m_i in m]), \
             np.array([env.state_space.index(s_prime_i) for s_prime_i in s_prime])
                 
-            target_values = q_backup_sampled(env, q_values, r, s_prime_idx)
+            target_values = q_backup_sampled(env, q_values, r, s_prime_idx, discount)
             intermed_values = project_qvalues_sampled(s_idx, a_idx, target_values, net, optimizer)
             if (i+1) % project_steps == 0:
                 q_values = intermed_values
@@ -319,9 +374,10 @@ def train(iters, rwindow, ratio):
         return q_values, qvalue_list, np.mean(online_emperical), online_emperical, online_reward
 
     net = Net(env)
-    fqi_qvalues, fqi_qvalues_list, fqi_online, fqi_reward_list, fqi_reward_cumulate = FQI(env, net, batch_size=batch_size, num_itrs=num_itrs, project_steps=project_steps, training_dataset=np_training_data)
+    fqi_qvalues, fqi_qvalues_list, fqi_online, fqi_reward_list, fqi_reward_cumulate = FQI(env, net, batch_size, num_itrs, discount, project_steps, training_dataset=np_training_data)
     fqi_policy=[env.action_space[i] for i in np.argmax(fqi_qvalues, axis=1)]     
-    print("\nOptimal q values from FQI: \n",fqi_qvalues)
+    print("\nTraining results for FQI...")
+    print("Optimal q values from FQI: \n",fqi_qvalues)
     print("Optimal policy for FQI:\nstate 0: action", fqi_policy[0], ", state 1: action", fqi_policy[1])
     print("FQI online mean reward (std) with number of iterations %d and number of projection steps %d: \n%f+-(%f)" % (num_itrs, project_steps, fqi_online, np.std(fqi_reward_list)))
         
@@ -347,7 +403,7 @@ def train(iters, rwindow, ratio):
         pred_qvalues = network(s_onehot)
         return pred_qvalues.detach().cpu().numpy()
     
-    def CQL(env, net, batch_size, num_itrs, discount=0.99, project_steps=50, cql_alpha=0.1, training_dataset=None):
+    def CQL(env, net, batch_size, num_itrs, discount, project_steps, cql_alpha, training_dataset=None):
         dS = env.num_states
         dA = env.num_actions
         net = net.to(device)
@@ -366,7 +422,7 @@ def train(iters, rwindow, ratio):
             np.array([env.mediator_space.index(m_i) for m_i in m]), \
             np.array([env.state_space.index(s_prime_i) for s_prime_i in s_prime])
                 
-            target_values = q_backup_sampled(env, q_values, r, s_prime_idx)
+            target_values = q_backup_sampled(env, q_values, r, s_prime_idx, discount)
             intermed_values = project_qvalues_cql(s_idx, a_idx, target_values, net, optimizer,  cql_alpha)
             if (i+1) % project_steps == 0:
                 q_values = intermed_values
@@ -381,9 +437,10 @@ def train(iters, rwindow, ratio):
         return q_values, qvalue_list, np.mean(online_emperical), online_emperical, online_reward
 
     net = Net(env)
-    cql_qvalues, cql_qvalues_list, cql_online, cql_reward_list, cql_reward_cumulate = CQL(env, net, batch_size=batch_size, num_itrs=num_itrs, \
-                                                                                          project_steps=project_steps, cql_alpha=cql_alpha, training_dataset=np_training_data)
-    cql_policy=[env.action_space[i] for i in np.argmax(cql_qvalues, axis=1)]     
+    cql_qvalues, cql_qvalues_list, cql_online, cql_reward_list, cql_reward_cumulate = CQL(env, net, batch_size, num_itrs, discount,\
+                                                                                          project_steps, cql_alpha, training_dataset=np_training_data)
+    cql_policy=[env.action_space[i] for i in np.argmax(cql_qvalues, axis=1)]  
+    print("\nTraining results for CQL...")
     print("Optimal q values from CQL: \n",cql_qvalues)
     print("Optimal policy for CQL:\nstate 0: action", cql_policy[0], ", state 1: action", cql_policy[1])
     print("CQL online mean reward (std) with number of iterations %d and number of projection steps %d: \n%f+-(%f)" % (num_itrs, project_steps, cql_online, np.std(cql_reward_list)))
@@ -499,9 +556,10 @@ def train(iters, rwindow, ratio):
     mnet = mNet(env)
     cal_qvalues, cal_qvalues_list, cal_online, cal_reward_list, cal_reward_cumulate = PESCAL(env, net=mnet, batch_size=batch_size, num_itrs=num_itrs, project_steps=project_steps, training_dataset=np_training_data)
     cal_policy=[env.action_space[i] for i in np.argmax(cal_qvalues, axis=1)]     
-    print("\nOptimal q values from FQI with mediator: \n",cal_qvalues)
-    print("Optimal policy for FQI with mediator:\nstate 0: action", cal_policy[0], ", state 1: action", cal_policy[1])
-    print("FQI with mediator online mean reward (std) with number of iterations %d and number of projection steps %d: \n%f+-(%f)" % (num_itrs, project_steps, cal_online, np.std(cal_reward_list)))
+    print("\nTraining results for CAL...")
+    print("Optimal q values from CAL: \n",cal_qvalues)
+    print("Optimal policy for CAL:\nstate 0: action", cal_policy[0], ", state 1: action", cal_policy[1])
+    print("CAL online mean reward (std) with number of iterations %d and number of projection steps %d: \n%f+-(%f)" % (num_itrs, project_steps, cal_online, np.std(cal_reward_list)))
     
     #PESCAL
     pescal_reward_list={}
@@ -509,10 +567,11 @@ def train(iters, rwindow, ratio):
     for p_ratio in p_ratios:
         mnet = mNet(env)
         pescal_qvalues, pescal_qvalues_list, pescal_online, pescal_reward_list[str(p_ratio)], pescal_reward_cumulate[str(p_ratio)] = PESCAL(env, mnet, batch_size, num_itrs, penalize_m=True, pm_method='sd', p_ratio=p_ratio, project_steps=project_steps, training_dataset=np_training_data)
-        pescal_policy=[env.action_space[i] for i in np.argmax(pescal_qvalues, axis=1)]     
-        print("\nOptimal q values from FQI with mediator sd: \n",pescal_qvalues)
-        print("Optimal policy for FQI with mediator sd:\nstate 0: action", pescal_policy[0], ", state 1: action", pescal_policy[1])
-        print("FQI with mediator sd online mean reward (std) with number of iterations %d and number of projection steps %d: \n%f+-(%f)" % (num_itrs, project_steps, pescal_online, np.std(pescal_reward_list[str(p_ratio)])))
+        pescal_policy=[env.action_space[i] for i in np.argmax(pescal_qvalues, axis=1)]  
+        print("\nTraining results for PESCAL...")
+        print("Optimal q values from PESCAL: \n",pescal_qvalues)
+        print("Optimal policy for PESCAL:\nstate 0: action", pescal_policy[0], ", state 1: action", pescal_policy[1])
+        print("PESCAL online mean reward (std) with number of iterations %d and number of projection steps %d: \n%f+-(%f)" % (num_itrs, project_steps, pescal_online, np.std(pescal_reward_list[str(p_ratio)])))
 
     dictionary = {
         "fqi_rewards": fqi_reward_list,
@@ -527,18 +586,36 @@ def train(iters, rwindow, ratio):
         dictionary["pescal_rewards_cumulate"+str(p_ratio)]=pescal_reward_cumulate[str(p_ratio)]
 
 
-    with open("./data/pescal_sim_"+str(ratio)+"_"+str(iters)+".json", "w") as outfile:
+    with open(f"./data/{filename}.json", "w") as outfile:
         json.dump(dictionary, outfile)
         
     end_time = time.time()
-    print('Takes time: {}'.format(time.strftime("%H:%M:%S", time.gmtime(end_time-start_time))))
+    print('\nTakes time: {}\n'.format(time.strftime("%H:%M:%S", time.gmtime(end_time-start_time))))
 
 
 if __name__=="__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--iters', type=int)
-    parser.add_argument('--rwindow', type=int, default=50)
-    parser.add_argument('--ratio', type=float)
+    parser.add_argument('--env_setting', default="confounded")              # Environment is confounded or unconfounded
+    parser.add_argument('--seed', type=int)                                 # Seed for PyTorch and Numpy, we use 100 seeds in total
+    parser.add_argument('--keeping_ratio', type=float)                      # Ratio of the original data (50000 observation tuples in total) to keep
+    parser.add_argument('--rwindow', type=int, default=50)                  # Moving window length of which we take average of emperical online reward
+    parser.add_argument('--training_steps', type=int, default=10000)        # Total training steps
+    parser.add_argument('--project_steps', type=float, default=50)          # How often in steps do we evaluate
+    parser.add_argument('--batch_size', type=int, default=128)              # Batch size to sample from offline dataset during training
+    parser.add_argument('--discount', type=float, default=0.99)             # Discount factor
     args = parser.parse_args()
-    train(args.iters, args.rwindow, args.ratio)
+    
+    env_settings = ["unconfounded", "confounded"]
+    num_seeds = list(range(100))
+    keeping_ratio_list = [0.0003, 0.5, 1]
+    
+    for e in env_settings:
+        args.env_setting = e
+        for i in num_seeds:
+            args.seed = i
+            for kr in keeping_ratio_list:
+                args.keeping_ratio = float(kr)
+                train(args.env_setting, args.seed, args.keeping_ratio, args.rwindow, 
+                      args.training_steps, args.project_steps, args.batch_size, args.discount)
+    

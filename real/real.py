@@ -2,67 +2,128 @@ import numpy as np, torch, torch.nn as nn, time, os, statsmodels.api as sm
 from scipy.special import expit
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
-device=torch.device("cpu")
 if not os.path.exists('data'):
    os.makedirs('data', exist_ok=True)
+device=torch.device("cpu") # We found the code more cpu-demanding.
 
-def train(iters, rwindow, ratio):
+
+def train(env_setting, seed, ratio, rwindow, num_itrs, project_steps, batch_size, discount, tau):
     start_time = time.time()
-    #ratio=1 rwindow=50
+    print("---------------------------------------")
+    print(f"Environment: real, {env_setting}; Keeping ratio: {ratio}; Seed: {seed}")
+    print("---------------------------------------")
     #MDP
-    class Env(object):
-        def __init__(self):
-            self.confounder_space=[-1,1]
-            self.action_space=[0,1]
-            self.mediator_space=[0,1]
+    if env_setting == "unconfounded":
+        filename = f"pescal_real_noc_{ratio}_{seed}"
+        class Env(object):
+            def __init__(self):
+                self.confounder_space=[-1,1]
+                self.action_space=[0,1]
+                self.mediator_space=[0,1]
+                
+                self.dim_state=3
+                self.num_actions=len(self.action_space)
+                self.num_confounders=len(self.confounder_space)
+                self.num_mediators=len(self.mediator_space)
             
-            self.dim_state=3
-            self.num_actions=len(self.action_space)
-            self.num_confounders=len(self.confounder_space)
-            self.num_mediators=len(self.mediator_space)
-        
-        def init_state(self):
-            init_state = np.random.normal(size=self.dim_state, scale=0.1)
-            return init_state
+            def init_state(self):
+                init_state = np.random.normal(size=self.dim_state, scale=0.1)
+                return init_state
 
-        def confounder(self, state):
-            confounder = np.random.choice(self.confounder_space, 1, p=[0.5, 0.5])
-            return confounder
+            def confounder(self, state):
+                confounder = np.random.choice(self.confounder_space, 1, p=[0.5, 0.5])
+                return confounder
 
-        def action(self, state, confounder):
-            pa = float(expit(0.1*np.sum(state) + 0.9*confounder))
-            a = np.random.choice(self.action_space, 1, p=[1-pa, pa])
-            return a
+            def action(self, state, confounder):
+                pa = expit(0.1*np.sum(state))
+                a = np.random.choice(self.action_space, 1, p=[1-pa, pa])
+                return a
 
-        def mediator(self, state, action):
-            pm = float(expit(0.1*np.sum(state) + 0.9*(action - 0.5)))
-            m = np.random.choice(self.mediator_space, 1, p=[1-pm, pm])
-            return m
+            def mediator(self, state, action):
+                pm = expit(0.1*np.sum(state) + 0.9*(action - 0.5)).item()
+                m = np.random.choice(self.mediator_space, 1, p=[1-pm, pm])
+                return m
 
-        def reward(self, state, mediator, confounder, random=True):
-            if self.dim_state == 1:
-                rmean = 0.5*np.clip(confounder, a_min=0, a_max=1)*(state[0] + mediator) - 0.1*state[0]
-            elif self.dim_state >= 2:
-                rmean = 0.5*np.clip(confounder, a_min=0, a_max=1)*(np.sum(state) + mediator) - 0.1*np.sum(state)
-                pass
-            if random:
-                reward = np.random.normal(size=1, loc=rmean, scale=0.1)
-            else:
-                reward = rmean
-            return reward
+            def reward(self, state, mediator, confounder, random=True):
+                if self.dim_state == 1:
+                    rmean = 0.5*(state[0] + mediator) - 0.1*state[0]
+                elif self.dim_state >= 2:
+                    rmean = 0.5*(np.sum(state) + mediator) - 0.1*np.sum(state)
+                    pass
+                if random:
+                    reward = np.random.normal(size=1, loc=rmean, scale=0.1)
+                else:
+                    reward = rmean
+                return reward
 
-        def next_state(self, state, mediator, confounder):
-            next_state = np.copy(state)
-            if self.dim_state >= 2:
-                next_state = 0.5*np.clip(confounder, a_min=0, a_max=1) * (state + mediator) - 0.1*state
-            elif self.dim_state == 1:
-                next_state[0] = 0.5*np.clip(confounder, a_min=0, a_max=1)*(state[0] + mediator) - 0.1*state[0]
-            else:
-                pass
-            cov_matrix = 1*np.eye(self.dim_state)
-            next_state = np.random.multivariate_normal(size=1, mean=next_state, cov=cov_matrix)
-            next_state = next_state.flatten()
-            return next_state
+            def next_state(self, state, mediator, confounder):
+                next_state = np.copy(state)
+                if self.dim_state >= 2:
+                    next_state = 0.5*(state + mediator) - 0.1*state
+                elif self.dim_state == 1:
+                    next_state[0] = 0.5*(state[0] + mediator) - 0.1*state[0]
+                else:
+                    pass
+                cov_matrix = 1*np.eye(self.dim_state)
+                next_state = np.random.multivariate_normal(size=1, mean=next_state, cov=cov_matrix)
+                next_state = next_state.flatten()
+                return next_state
+    
+    else: 
+        filename = f"pescal_real_{ratio}_{seed}"
+        class Env(object):
+            def __init__(self):
+                self.confounder_space=[-1,1]
+                self.action_space=[0,1]
+                self.mediator_space=[0,1]
+                
+                self.dim_state=3
+                self.num_actions=len(self.action_space)
+                self.num_confounders=len(self.confounder_space)
+                self.num_mediators=len(self.mediator_space)
+            
+            def init_state(self):
+                init_state = np.random.normal(size=self.dim_state, scale=0.1)
+                return init_state
+
+            def confounder(self, state):
+                confounder = np.random.choice(self.confounder_space, 1, p=[0.5, 0.5])
+                return confounder
+
+            def action(self, state, confounder):
+                pa = expit(0.1*np.sum(state) + 0.9*confounder)
+                a = np.random.choice(self.action_space, 1, p=[1-pa, pa])
+                return a
+
+            def mediator(self, state, action):
+                pm = expit(0.1*np.sum(state) + 0.9*(action - 0.5)).item()
+                m = np.random.choice(self.mediator_space, 1, p=[1-pm, pm])
+                return m
+
+            def reward(self, state, mediator, confounder, random=True):
+                if self.dim_state == 1:
+                    rmean = 0.5*np.clip(confounder, a_min=0, a_max=1)*(state[0] + mediator) - 0.1*state[0]
+                elif self.dim_state >= 2:
+                    rmean = 0.5*np.clip(confounder, a_min=0, a_max=1)*(np.sum(state) + mediator) - 0.1*np.sum(state)
+                    pass
+                if random:
+                    reward = np.random.normal(size=1, loc=rmean, scale=0.1)
+                else:
+                    reward = rmean
+                return reward
+
+            def next_state(self, state, mediator, confounder):
+                next_state = np.copy(state)
+                if self.dim_state >= 2:
+                    next_state = 0.5*np.clip(confounder, a_min=0, a_max=1)*(state + mediator) - 0.1*state
+                elif self.dim_state == 1:
+                    next_state[0] = 0.5*np.clip(confounder, a_min=0, a_max=1)*(state[0] + mediator) - 0.1*state[0]
+                else:
+                    pass
+                cov_matrix = 1*np.eye(self.dim_state)
+                next_state = np.random.multivariate_normal(size=1, mean=next_state, cov=cov_matrix)
+                next_state = next_state.flatten()
+                return next_state
 
     env=Env()
 
@@ -90,12 +151,13 @@ def train(iters, rwindow, ratio):
                 emperical_reward[a]+=online_reward_single[a]
         emperical_reward.update((x,y/trajectory) for x,y in emperical_reward.items())
         return emperical_reward
-
+    
+    print("Online environment observations...")
     emperical_reward=average_emperical_reward(env, trajectory=100, horizon=1000)            
     opt_pol=max(emperical_reward, key=emperical_reward.get)
     print("Online reward for all possible policy:\n", emperical_reward)
     print("Online optimal policy", opt_pol)
-                                 
+    
     ###Generate offline training dataset
     def generate_training_dataset(env, epoch, horizon):
         training_dataset=[]
@@ -111,6 +173,7 @@ def train(iters, rwindow, ratio):
                 s=s_prime
         return training_dataset
     
+    print("\nFinished environment observations, generating offline dataset...")
     training_dataset_orig=generate_training_dataset(env, epoch=100, horizon=500)
     
     training_dataset=training_dataset_orig[:round(ratio*len(training_dataset_orig))]
@@ -120,7 +183,8 @@ def train(iters, rwindow, ratio):
         else:
             pass
 
-    #Data pre processing
+    #Data pre-processing
+    print("\nCalculating front-door adjustment probabilities...")
     s=[]
     [s.append(t[0]) for t in training_dataset]
     s=np.array(s)
@@ -171,12 +235,8 @@ def train(iters, rwindow, ratio):
     
 
     ##################Algorithms######################
-    num_itrs=10000
-    project_steps=50
-    batch_size=128
-    tau=0.99
-    
-    #Neural net
+    print("\nBegin training with different algorithms...")
+    #Neural Net
     class qNet(nn.Module):
         def __init__(self, env):
             super(qNet, self).__init__()
@@ -277,7 +337,8 @@ def train(iters, rwindow, ratio):
                     rewards_list.append(np.mean(rewards[-rwindow:]))
             
         return losses, rewards, rewards_list
-
+    
+    print("\nTraining results for FQI...")
     qnet=qNet(env).to(device)
     target_net = qNet(env).to(device)
     target_net.load_state_dict(qnet.state_dict())
@@ -333,6 +394,7 @@ def train(iters, rwindow, ratio):
             
         return losses, rewards, rewards_list
 
+    print("\nTraining results for CQL...")
     qnet=qNet(env).to(device)
     target_net = qNet(env).to(device)
     target_net.load_state_dict(qnet.state_dict())
@@ -407,6 +469,7 @@ def train(iters, rwindow, ratio):
         return losses, rewards, rewards_list
       
     #CAL
+    print("\nTraining results for CAL...")
     mqnet=mqNet(env).to(device)
     target_net = mqNet(env).to(device)
     target_net.load_state_dict(mqnet.state_dict())
@@ -414,6 +477,7 @@ def train(iters, rwindow, ratio):
     print("FQI with mediator online mean reward (std) with number of iterations %d and projection steps %d: \n%f+-(%f)" % (num_itrs, project_steps, np.mean(cal_rewards), np.std(cal_rewards)))
     
     #PESCAL
+    print("\nTraining results for PESCAL...")
     mqnet=mqNet(env).to(device)
     target_net = mqNet(env).to(device)
     target_net.load_state_dict(mqnet.state_dict())
@@ -439,20 +503,40 @@ def train(iters, rwindow, ratio):
         
     }
 
-    with open("./data/pescal_real_"+str(ratio)+"_"+str(iters)+".json", "w") as outfile:
+    with open(f"./data/{filename}.json", "w") as outfile:
         json.dump(dictionary, outfile)
         
     end_time = time.time()
-    print('Algorithm takes: {}'.format(time.strftime("%H:%M:%S", time.gmtime(end_time-start_time))))
+    print('\nTakes time: {}\n'.format(time.strftime("%H:%M:%S", time.gmtime(end_time-start_time))))
 
 
 if __name__ == '__main__':
     import argparse, json
     parser = argparse.ArgumentParser()
-    parser.add_argument('--iters', type=int)
-    parser.add_argument('--rwindow', type=int, default=50)
-    parser.add_argument('--ratio', type=float)
+    parser.add_argument('--env_setting', default="confounded")              # Environment is confounded or unconfounded
+    parser.add_argument('--seed', type=int)                                 # Seed for PyTorch and Numpy, we use 100 seeds in total
+    parser.add_argument('--keeping_ratio', type=float)                      # Ratio of the original data (50000 observation tuples in total) to keep
+    parser.add_argument('--rwindow', type=int, default=50)                  # Moving window length of which we take average of emperical online reward
+    parser.add_argument('--training_steps', type=int, default=10000)        # Total training steps
+    parser.add_argument('--project_steps', type=float, default=50)          # How often in steps do we evaluate
+    parser.add_argument('--batch_size', type=int, default=128)              # Batch size to sample from offline dataset during training
+    parser.add_argument('--discount', type=float, default=0.99)             # Discount factor
+    parser.add_argument('--tau', type=float, default=0.99)                  # Target network update rate
     args = parser.parse_args()
-    train(args.iters, args.rwindow, args.ratio)
+    
+    env_settings = ["unconfounded", "confounded"]
+    num_seeds = list(range(1))
+    keeping_ratio_list = [0.0003, 0.5, 1]
+    
+    for e in env_settings:
+        args.env_setting = e
+        for i in num_seeds:
+            args.seed = i
+            for kr in keeping_ratio_list:
+                args.keeping_ratio = float(kr)
+                train(args.env_setting, args.seed, args.keeping_ratio, args.rwindow, 
+                      args.training_steps, args.project_steps, args.batch_size, args.discount, args.tau)
+    
+    
     
 

@@ -2,9 +2,7 @@ import json, numpy as np, matplotlib.pyplot as plt, seaborn as sns, pandas as pd
 from collections import defaultdict
 p_ratios=[1.96]
 
-ratios=[0.0003,
-        0.5,
-        1]
+ratios=[0.0003, 0.5, 1]
 types = ["noc"]
 
 
