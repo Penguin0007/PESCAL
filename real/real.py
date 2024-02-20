@@ -91,7 +91,7 @@ def train(env_setting, seed, ratio, rwindow, num_itrs, project_steps, batch_size
                 return confounder
 
             def action(self, state, confounder):
-                pa = expit(0.1*np.sum(state) + 0.9*confounder)
+                pa = expit(0.1*np.sum(state) + 0.9*confounder).item()
                 a = np.random.choice(self.action_space, 1, p=[1-pa, pa])
                 return a
 
@@ -525,7 +525,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     
     env_settings = ["unconfounded", "confounded"]
-    num_seeds = list(range(1))
+    num_seeds = list(range(100))
     keeping_ratio_list = [0.0003, 0.5, 1]
     
     for e in env_settings:
