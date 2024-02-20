@@ -3,7 +3,7 @@
 The code is author's implementation for paper "Pessimistic Causal Reinforcement Learning with Mediators for Confounded Observational Data".
 
 # Requirements
-First, create and activate `"pescal"` environment, and install required packages. Download and run the following code in terminal under the root directory that contains `requirements.txt`.
+First, create and activate `"pescal"` environment, and install required packages. Download the projec and run the following code in terminal under the root directory that contains `requirements.txt`.
 
 ```
 conda create -n pescal python=3.7
