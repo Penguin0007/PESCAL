@@ -1,6 +1,6 @@
 # Introduction
 
-The code is author's implementation of experiment results in "Pessimistic Causal Reinforcement Learning with Mediators for Confounded Observational Data".
+The code is author's implementation for paper "Pessimistic Causal Reinforcement Learning with Mediators for Confounded Observational Data".
 
 # Requirements
 First, create and activate `"pescal"` environment, and install required packages. Download and run the following code in terminal under the folder that contains `requirements.txt`.
