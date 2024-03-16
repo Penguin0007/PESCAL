@@ -38,4 +38,4 @@ python read_real.py
 ```
 The code will generate all the plots in Figure 5 and Figure 6.
 
-We use a computing cluster that has Sky Lake CPUs @ 2.60GHz, 24 processor cores, 96 GB of RAM, and 100 Gbps Infiniband interconnects. Runtime for PESCAL and CAL both take around 5 minutes for simulation; and around 1.5 hours for real data experiment, for 10000 steps of training in each seed.
+We use a computing cluster that has Sky Lake CPUs @ 2.60GHz, 24 processor cores, 96 GB of RAM, and 100 Gbps Infiniband interconnects. The runtime for PESCAL and CAL is approximately 5 minutes for simulations and about 1.5 hours for real-data experiments. These runtimes are calculated over 10,000 training steps.
